@@ -343,7 +343,7 @@ def find_enclosed_rings(grid: np.ndarray, bg: int = 0):
 
     for ring_color in ring_colors:
         visited = np.zeros((h, w), dtype=bool)
-        visited[grid == ring_color] = True  # Mark ring cells as visited
+        visited[grid == ring_color] = True  
 
         for r in range(h):
             for c in range(w):
@@ -383,7 +383,7 @@ def rule_fill_enclosed_rings(inp: np.ndarray):
         if color == bg:
             continue
         color_coords = set(zip(*np.where(inp == color)))
-        if len(color_coords) < 8:  # Rings need to be substantial
+        if len(color_coords) < 8:  
             continue
 
         rows = [r for r, c in color_coords]
@@ -452,7 +452,7 @@ def rule_fill_enclosed_rings(inp: np.ndarray):
         if color not in [ring_color for ring_color, _ in rings]:
             out[inp == color] = color
 
-    ring_interior_pieces = {}  # Map ring_color -> set of interior piece coordinates
+    ring_interior_pieces = {}  
     for ring_color, region_cells in rings:
         ring_boundary, interior_pieces = find_ring_boundary_and_interior_pieces(ring_color, set(region_cells))
         for r, c in ring_boundary:
@@ -489,7 +489,7 @@ def find_plus_flowers(inp: np.ndarray, flower_color: int = 2):
 
     for r in range(1, h - 1):
         for c in range(1, w - 1):
-            if inp[r, c] == 0:  # Center must be background
+            if inp[r, c] == 0:  
                 has_up = inp[r - 1, c] == flower_color
                 has_down = inp[r + 1, c] == flower_color
                 has_left = inp[r, c - 1] == flower_color
@@ -526,7 +526,7 @@ def rule_connect_flower_petals(inp: np.ndarray):
         r1, c1 = right_petal
         for left_petal in left_petals:
             r2, c2 = left_petal
-            if r1 == r2 and c2 > c1:  # Same row, left petal is to the right
+            if r1 == r2 and c2 > c1:  
                 for c in range(c1 + 1, c2):
                     if out[r1, c] == bg:
                         out[r1, c] = line_color
@@ -535,7 +535,7 @@ def rule_connect_flower_petals(inp: np.ndarray):
         r1, c1 = down_petal
         for up_petal in up_petals:
             r2, c2 = up_petal
-            if c1 == c2 and r2 > r1:  # Same column, up petal is below
+            if c1 == c2 and r2 > r1:  
                 for r in range(r1 + 1, r2):
                     if out[r, c1] == bg:
                         out[r, c1] = line_color
@@ -592,7 +592,7 @@ def rule_reflect_shape_in_tray(inp: np.ndarray):
         interior_c0, interior_c1 = c0 + 1, c1 - 1
 
         if interior_r1 < interior_r0 or interior_c1 < interior_c0:
-            continue  # No interior space
+            continue  
 
         shape_coords = []
         for r in range(interior_r0, interior_r1 + 1):
@@ -601,7 +601,7 @@ def rule_reflect_shape_in_tray(inp: np.ndarray):
                     shape_coords.append((r, c))
 
         if not shape_coords:
-            continue  # No shape in this tray
+            continue  
 
         interior_h = interior_r1 - interior_r0 + 1
         interior_w = interior_c1 - interior_c0 + 1
@@ -896,7 +896,7 @@ def rule_fit_shapes_into_holes(inp: np.ndarray):
                 last_row_colors[val] = last_row_colors.get(val, 0) + 1
         if last_row_colors:
             most_common = max(last_row_colors.items(), key=lambda x: x[1])
-            if most_common[1] >= w // 2:  # At least half the row is this color
+            if most_common[1] >= w // 2:  
                 base_row = h - 1
                 ground_color = most_common[0]
 
@@ -1042,6 +1042,44 @@ def rule_fit_shapes_into_holes(inp: np.ndarray):
     return out
 
 
+def rule_extract_box_contents(inp: np.ndarray):
+    h, w = inp.shape
+    bg = 0
+    box_color = 1
+
+    
+    box_coords = set(zip(*np.where(inp == box_color)))
+    if not box_coords:
+        return inp.copy()
+
+    rows = [r for r, c in box_coords]
+    cols = [c for r, c in box_coords]
+    r0, r1 = min(rows), max(rows)
+    c0, c1 = min(cols), max(cols)
+
+    
+    
+    if r1 - r0 < 2 or c1 - c0 < 2:
+        return inp.copy()
+
+    
+    interior_pixels = []
+    for r in range(r0 + 1, r1):
+        for c in range(c0 + 1, c1):
+            if inp[r, c] != bg and inp[r, c] != box_color:
+                interior_pixels.append(inp[r, c])
+
+    
+    out = np.zeros((3, 3), dtype=inp.dtype)
+    for i, pixel_val in enumerate(interior_pixels):
+        if i < 9:  
+            row = i // 3
+            col = i % 3
+            out[row, col] = pixel_val
+
+    return out
+
+
 class DiagonalTrailRule:
     def __init__(self, train_pairs):
         self.train_pairs = train_pairs
@@ -1069,6 +1107,7 @@ BASE_RULES: List[Callable[[np.ndarray], np.ndarray]] = [
     rule_count_and_sort_colored_boxes,
     rule_complete_quadrant_symmetry,
     rule_fit_shapes_into_holes,
+    rule_extract_box_contents,
 ]
 
 
