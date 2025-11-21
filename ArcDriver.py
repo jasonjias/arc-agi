@@ -6,7 +6,7 @@ import numpy as np
 from ArcData import ArcData
 from ArcProblem import ArcProblem
 from ArcSet import ArcSet
-from ArcAgent_milestoneC import ArcAgent
+from ArcAgent_milestoneB import ArcAgent
 
 def run_training_data(agent: ArcAgent, arc_problems: list[ArcProblem]) -> dict[ArcProblem, tuple[bool, list]]:
     """
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     
     # Here you can use this to open other milestone data directories for running against
     #  you'll should copy this code and change the path to the milestone you want to load (B, C or D)
-    milestone_path = os.path.join('Milestones', 'C')
+    milestone_path = os.path.join('Milestones', 'B')
     milestone_data: list[str] = os.listdir(milestone_path)
 
     arc_milestone_problems: list[ArcProblem] = load_arc_problems(milestone_path, milestone_data)
