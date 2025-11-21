@@ -5,7 +5,7 @@ import numpy as np
 from ArcData import ArcData
 from ArcProblem import ArcProblem
 from ArcSet import ArcSet
-from ArcAgent import rule_fill_frames_with_frequent_color, np_equal
+from ArcAgent_tmp import rule_fill_frames_with_frequent_color, np_equal
 
 # Load a single problem to test
 problem_name = "4b6b68e5.json"

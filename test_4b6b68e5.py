@@ -5,9 +5,9 @@ import numpy as np
 from ArcData import ArcData
 from ArcProblem import ArcProblem
 from ArcSet import ArcSet
-from ArcAgent_tmp import ArcAgent
+from ArcAgent import ArcAgent
 
-# Load a single problem to test
+# Load the problem
 problem_name = "4b6b68e5.json"
 milestone_path = os.path.join('Milestones', 'D')
 
@@ -42,7 +42,12 @@ answer = arc_problem.test_set().get_output_data().data()
 correct = False
 for i, prediction in enumerate(preds):
     is_match = np.array_equal(answer, prediction)
-    print(f"\nPrediction {i+1} matches: {is_match}")
+    if prediction.shape == answer.shape:
+        match_pct = np.sum(prediction == answer) / answer.size * 100
+        print(f"\nPrediction {i+1}: {match_pct:.1f}% match")
+    else:
+        print(f"\nPrediction {i+1}: Shape mismatch ({prediction.shape} vs {answer.shape})")
+    print(f"Matches: {is_match}")
     if is_match:
         correct = True
 

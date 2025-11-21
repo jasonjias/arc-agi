@@ -2,7 +2,7 @@ import json
 import os.path
 import numpy as np
 
-from ArcAgent import detect_rectangular_frames
+from ArcAgent_tmp import detect_rectangular_frames
 
 # Load a single problem to test
 problem_name = "4b6b68e5.json"

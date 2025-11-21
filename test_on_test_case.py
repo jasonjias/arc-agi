@@ -2,7 +2,7 @@ import json
 import os.path
 import numpy as np
 
-from ArcAgent import rule_fill_frames_with_frequent_color
+from ArcAgent_tmp import rule_fill_frames_with_frequent_color
 
 # Load the problem
 problem_name = "4b6b68e5.json"

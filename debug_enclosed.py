@@ -2,7 +2,7 @@ import json
 import os.path
 import numpy as np
 
-from ArcAgent import find_enclosed_regions_by_color
+from ArcAgent_tmp import find_enclosed_regions_by_color
 
 # Load the problem
 problem_name = "4b6b68e5.json"
