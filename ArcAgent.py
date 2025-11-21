@@ -4,11 +4,11 @@ from ArcProblem import ArcProblem
 from ArcSet import ArcSet
 
 
-def np_equal(a: np.ndarray, b: np.ndarray) -> bool:
+def np_equal(a: np.ndarray, b: np.ndarray):
     return a.shape == b.shape and np.array_equal(a, b)
 
 
-def hstack_or_pad(blocks: List[np.ndarray], pad_val: int = 0) -> np.ndarray:
+def hstack_or_pad(blocks: List[np.ndarray], pad_val: int = 0):
     if not blocks:
         return np.zeros((1, 1), dtype=int)
     max_h = max(b.shape[0] for b in blocks)
@@ -21,14 +21,14 @@ def hstack_or_pad(blocks: List[np.ndarray], pad_val: int = 0) -> np.ndarray:
     return np.concatenate(rows, axis=1)
 
 
-def bounding_box_of_foreground(grid: np.ndarray, bg: int = 0) -> Tuple[int, int, int, int] | None:
+def bounding_box_of_foreground(grid: np.ndarray, bg: int = 0):
     ys, xs = np.where(grid != bg)
     if ys.size == 0:
         return None
     return ys.min(), ys.max(), xs.min(), xs.max()
 
 
-def extract_connected_components(grid: np.ndarray, bg: int = 0) -> List[np.ndarray]:
+def extract_connected_components(grid: np.ndarray, bg: int = 0):
     h, w = grid.shape
     visited = np.zeros((h, w), dtype=bool)
     comps = []
@@ -67,11 +67,11 @@ def extract_connected_components(grid: np.ndarray, bg: int = 0) -> List[np.ndarr
     return comps
 
 
-def rule_identity(inp: np.ndarray) -> np.ndarray:
+def rule_identity(inp: np.ndarray):
     return inp.copy()
 
 
-def rule_bounding_box_fill(inp: np.ndarray) -> np.ndarray:
+def rule_bounding_box_fill(inp: np.ndarray):
     bg = 0
     bb = bounding_box_of_foreground(inp, bg=bg)
     if bb is None:
@@ -82,7 +82,7 @@ def rule_bounding_box_fill(inp: np.ndarray) -> np.ndarray:
     return out
 
 
-def rule_tile2x2(inp: np.ndarray) -> np.ndarray:
+def rule_tile2x2(inp: np.ndarray):
     A = inp
     Ax = np.fliplr(A)
     Ay = np.flipud(A)
@@ -92,13 +92,13 @@ def rule_tile2x2(inp: np.ndarray) -> np.ndarray:
     return np.concatenate([top, bot], axis=0)
 
 
-def rule_components_row(inp: np.ndarray) -> np.ndarray:
+def rule_components_row(inp: np.ndarray):
     comps = extract_connected_components(inp, bg=0)
     comps.sort(key=lambda g: (-np.count_nonzero(g), int(g[g != 0][0]) if np.any(g != 0) else -1))
     return hstack_or_pad(comps, pad_val=0)
 
 
-def rule_merge_across_gray_line(inp: np.ndarray) -> np.ndarray:
+def rule_merge_across_gray_line(inp: np.ndarray):
     h, w = inp.shape
     gray_row = None
     for y in range(h):
@@ -124,11 +124,11 @@ def rule_merge_across_gray_line(inp: np.ndarray) -> np.ndarray:
     return merged
 
 
-def rule_transpose(inp: np.ndarray) -> np.ndarray:
+def rule_transpose(inp: np.ndarray):
     return inp.T.copy()
 
 
-def rule_anchor_frame_extract(inp: np.ndarray) -> np.ndarray:
+def rule_anchor_frame_extract(inp: np.ndarray):
     bg = 0
     colors = [c for c in np.unique(inp) if c != bg]
 
@@ -138,7 +138,7 @@ def rule_anchor_frame_extract(inp: np.ndarray) -> np.ndarray:
             return None
         return ys.min(), ys.max(), xs.min(), xs.max()
 
-    def looks_like_anchor(color: int, y0, y1, x0, x1) -> bool:
+    def looks_like_anchor(color: int, y0, y1, x0, x1):
         coords = set(zip(*np.where(inp == color)))
         corners = [(y0, x0), (y0, x1), (y1, x0), (y1, x1)]
         return all(corner in coords for corner in corners)
@@ -167,7 +167,7 @@ def rule_anchor_frame_extract(inp: np.ndarray) -> np.ndarray:
     return out
 
 
-def find_solid_blocks(inp: np.ndarray, block_size: int = 2) -> List[tuple]:
+def find_solid_blocks(inp: np.ndarray, block_size: int = 2):
     h, w = inp.shape
     hits = []
     for r in range(h - block_size + 1):
@@ -179,7 +179,7 @@ def find_solid_blocks(inp: np.ndarray, block_size: int = 2) -> List[tuple]:
     return hits
 
 
-def infer_direction_mapping(train_pairs: List[Tuple[np.ndarray, np.ndarray]]) -> dict[int, str]:
+def infer_direction_mapping(train_pairs: List[Tuple[np.ndarray, np.ndarray]]):
     mapping: dict[int, str] = {}
     for tin, tout in train_pairs:
         h, w = tin.shape
@@ -210,7 +210,7 @@ def infer_direction_mapping(train_pairs: List[Tuple[np.ndarray, np.ndarray]]) ->
     return mapping
 
 
-def apply_trails(inp: np.ndarray, mapping: dict[int, str]) -> np.ndarray:
+def apply_trails(inp: np.ndarray, mapping: dict[int, str]):
     h, w = inp.shape
     out = np.zeros_like(inp)
     blocks = find_solid_blocks(inp, block_size=2)
@@ -234,14 +234,14 @@ def apply_trails(inp: np.ndarray, mapping: dict[int, str]) -> np.ndarray:
     return out
 
 
-def rule_diagonal_trails_from_blocks(inp: np.ndarray, train_pairs: List[Tuple[np.ndarray, np.ndarray]] | None = None) -> np.ndarray:
+def rule_diagonal_trails_from_blocks(inp: np.ndarray, train_pairs: List[Tuple[np.ndarray, np.ndarray]] | None = None):
     if train_pairs is None or len(train_pairs) == 0:
         return inp.copy()
     mapping = infer_direction_mapping(train_pairs)
     return apply_trails(inp, mapping)
 
 
-def rule_fill_rows_by_matching_edges(inp: np.ndarray) -> np.ndarray:
+def rule_fill_rows_by_matching_edges(inp: np.ndarray):
     h, w = inp.shape
     out = inp.copy()
     for r in range(h):
@@ -252,7 +252,7 @@ def rule_fill_rows_by_matching_edges(inp: np.ndarray) -> np.ndarray:
     return out
 
 
-def rule_color_frequency_columns(inp: np.ndarray) -> np.ndarray:
+def rule_color_frequency_columns(inp: np.ndarray):
     h, w = inp.shape
     bg = 0
     counts: dict[int, int] = {}
@@ -277,16 +277,13 @@ def rule_color_frequency_columns(inp: np.ndarray) -> np.ndarray:
     return out
 
 
-def rule_superimpose_across_divider(inp: np.ndarray) -> np.ndarray:
-    """Find vertical divider line, superimpose left and right sides, convert to blue."""
+def rule_superimpose_across_divider(inp: np.ndarray):
     w = inp.shape[1]
 
-    # Find the divider column (look for a column that's all the same non-zero color)
     divider_col = None
     for c in range(w):
         col = inp[:, c]
         unique_vals = np.unique(col)
-        # Check if entire column is one non-zero color
         if len(unique_vals) == 1 and unique_vals[0] != 0:
             divider_col = c
             break
@@ -294,34 +291,27 @@ def rule_superimpose_across_divider(inp: np.ndarray) -> np.ndarray:
     if divider_col is None:
         return inp.copy()
 
-    # Split into left and right sides
     left = inp[:, :divider_col]
     right = inp[:, divider_col + 1:]
 
-    # Make them the same width by taking the minimum
     min_width = min(left.shape[1], right.shape[1])
     left = left[:, :min_width]
     right = right[:, :min_width]
 
-    # Superimpose: if either side has non-zero, result has non-zero
     result = np.where(left != 0, left, right)
 
-    # Convert all non-zero values to 1 (blue)
     result = np.where(result != 0, 1, 0)
 
     return result
 
 
-def rule_fuse_across_gray_divider(inp: np.ndarray) -> np.ndarray:
-    """Find gray divider, fuse left and right if they don't conflict, else return left."""
+def rule_fuse_across_gray_divider(inp: np.ndarray):
     w = inp.shape[1]
 
-    # Find the gray divider column (color 5)
     divider_col = None
     for c in range(w):
         col = inp[:, c]
         unique_vals = np.unique(col)
-        # Check if entire column is gray (color 5)
         if len(unique_vals) == 1 and unique_vals[0] == 5:
             divider_col = c
             break
@@ -329,45 +319,35 @@ def rule_fuse_across_gray_divider(inp: np.ndarray) -> np.ndarray:
     if divider_col is None:
         return inp.copy()
 
-    # Split into left and right sides
     left = inp[:, :divider_col]
     right = inp[:, divider_col + 1:]
 
-    # Make them the same width
     min_width = min(left.shape[1], right.shape[1])
     left = left[:, :min_width]
     right = right[:, :min_width]
 
-    # Check if they can be fused without conflict
-    # Conflict = both have non-zero values at same position but different values
     conflicts = (left != 0) & (right != 0) & (left != right)
 
     if np.any(conflicts):
-        # There are conflicts, return just the left side
         return left.copy()
     else:
-        # No conflicts, fuse them (overlay)
         result = np.where(left != 0, left, right)
         return result
 
 
-def find_enclosed_rings(grid: np.ndarray, bg: int = 0) -> List[Tuple[int, List[Tuple[int, int]]]]:
-    """Find enclosed regions (rings) by flood-filling from non-frame cells."""
+def find_enclosed_rings(grid: np.ndarray, bg: int = 0):
     h, w = grid.shape
     rings = []
 
-    # Find all non-background colors (potential ring colors)
     ring_colors = [c for c in np.unique(grid) if c != bg]
 
     for ring_color in ring_colors:
-        # Find all regions of non-ring cells using flood fill
         visited = np.zeros((h, w), dtype=bool)
         visited[grid == ring_color] = True  # Mark ring cells as visited
 
         for r in range(h):
             for c in range(w):
                 if not visited[r, c] and grid[r, c] != ring_color:
-                    # Flood fill from this cell to find connected region
                     stack = [(r, c)]
                     region = []
                     visited[r, c] = True
@@ -382,7 +362,6 @@ def find_enclosed_rings(grid: np.ndarray, bg: int = 0) -> List[Tuple[int, List[T
                                 visited[nr, nc] = True
                                 stack.append((nr, nc))
 
-                    # Check if this region is enclosed (doesn't touch border)
                     touches_border = any(rr == 0 or rr == h-1 or cc == 0 or cc == w-1 for rr, cc in region)
 
                     if not touches_border and len(region) > 0:
@@ -391,20 +370,15 @@ def find_enclosed_rings(grid: np.ndarray, bg: int = 0) -> List[Tuple[int, List[T
     return rings
 
 
-def rule_fill_enclosed_rings(inp: np.ndarray) -> np.ndarray:
-    """Fill enclosed rings with the most frequent color inside each ring, clear everything else."""
+def rule_fill_enclosed_rings(inp: np.ndarray):
     bg = 0
 
-    # Start with blank canvas - only keep rings and filled regions
     out = np.zeros_like(inp)
 
-    # Find all enclosed rings
     rings = find_enclosed_rings(inp, bg=bg)
 
-    # Collect all ring colors (colors that form ring structures with enclosed regions OR potential incomplete rings)
     ring_colors = set(ring_color for ring_color, _ in rings)
 
-    # Also check for potential incomplete ring structures by looking at all colors with significant "frame-like" patterns
     for color in np.unique(inp):
         if color == bg:
             continue
@@ -412,20 +386,17 @@ def rule_fill_enclosed_rings(inp: np.ndarray) -> np.ndarray:
         if len(color_coords) < 8:  # Rings need to be substantial
             continue
 
-        # Check if coordinates form a rectangular boundary pattern
         rows = [r for r, c in color_coords]
         cols = [c for r, c in color_coords]
         if rows and cols:
             min_r, max_r = min(rows), max(rows)
             min_c, max_c = min(cols), max(cols)
 
-            # Check if this looks like it could be a frame (has MANY cells on edges)
             top_count = sum((min_r, c) in color_coords for c in range(min_c, max_c + 1))
             bottom_count = sum((max_r, c) in color_coords for c in range(min_c, max_c + 1))
             left_count = sum((r, min_c) in color_coords for r in range(min_r, max_r + 1))
             right_count = sum((r, max_c) in color_coords for r in range(min_r, max_r + 1))
 
-            # Require significant coverage on edges (at least 40% of each present edge)
             width = max_c - min_c + 1
             height = max_r - min_r + 1
             has_top = top_count >= width * 0.4
@@ -433,26 +404,19 @@ def rule_fill_enclosed_rings(inp: np.ndarray) -> np.ndarray:
             has_left = left_count >= height * 0.4
             has_right = right_count >= height * 0.4
 
-            # If it has at least 3 sides with good coverage, consider it a ring structure
             sides_present = sum([has_top, has_bottom, has_left, has_right])
             if sides_present >= 3:
                 ring_colors.add(color)
 
-    # For each ring, find the connected component of the ring color that surrounds the enclosed region
-    def find_ring_boundary_and_interior_pieces(ring_color: int, interior_cells: set) -> tuple[set, set]:
-        """Find the ring boundary and any interior pieces of ring_color.
-        Returns (boundary_component, interior_pieces_in_this_ring)"""
+    def find_ring_boundary_and_interior_pieces(ring_color: int, interior_cells: set):
         h, w = inp.shape
 
-        # Get all ring_color pixels
         all_ring_pixels = set(zip(*np.where(inp == ring_color)))
 
-        # Find isolated pixels (not adjacent to any other pixel of same color)
         isolated_ring_pixels = set()
         connected_ring_pixels = set()
 
         for r, c in all_ring_pixels:
-            # Check if this pixel is adjacent to another ring pixel
             has_ring_neighbor = False
             for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
                 nr, nc = r + dr, c + dc
@@ -466,15 +430,11 @@ def rule_fill_enclosed_rings(inp: np.ndarray) -> np.ndarray:
             else:
                 connected_ring_pixels.add((r, c))
 
-        # Now determine which isolated pixels are actually inside THIS ring's interior
         interior_pieces_in_this_ring = set()
         for r, c in isolated_ring_pixels:
-            # Check if this isolated pixel is inside the current ring's interior
             if (r, c) in interior_cells:
-                # It's directly part of the interior region
                 interior_pieces_in_this_ring.add((r, c))
             else:
-                # Check if it's surrounded by interior cells (indirectly inside)
                 surrounded_by_interior = True
                 for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
                     nr, nc = r + dr, c + dc
@@ -488,13 +448,10 @@ def rule_fill_enclosed_rings(inp: np.ndarray) -> np.ndarray:
 
         return connected_ring_pixels, interior_pieces_in_this_ring
 
-    # Copy only ring structures to output
     for color in ring_colors:
         if color not in [ring_color for ring_color, _ in rings]:
-            # This color was detected by frame logic, copy all its pixels
             out[inp == color] = color
 
-    # For enclosed rings, copy the boundary and track interior pieces
     ring_interior_pieces = {}  # Map ring_color -> set of interior piece coordinates
     for ring_color, region_cells in rings:
         ring_boundary, interior_pieces = find_ring_boundary_and_interior_pieces(ring_color, set(region_cells))
@@ -502,9 +459,7 @@ def rule_fill_enclosed_rings(inp: np.ndarray) -> np.ndarray:
             out[r, c] = ring_color
         ring_interior_pieces[ring_color] = interior_pieces
 
-    # Now fill the enclosed rings
     for ring_color, region_cells in rings:
-        # Count colors inside this ring (excluding background and ring color)
         color_counts: dict[int, int] = {}
         for r, c in region_cells:
             val = inp[r, c]
@@ -512,19 +467,15 @@ def rule_fill_enclosed_rings(inp: np.ndarray) -> np.ndarray:
                 color_counts[val] = color_counts.get(val, 0) + 1
 
         if not color_counts:
-            # No fill color found, keep interior as background
             for r, c in region_cells:
                 out[r, c] = bg
             continue
 
-        # Get most frequent color
         fill_color = max(color_counts.keys(), key=lambda c: color_counts[c])
 
-        # Fill the entire enclosed region with this color
         for r, c in region_cells:
             out[r, c] = fill_color
 
-        # Also fill any interior pieces (disconnected ring-colored pixels inside)
         if ring_color in ring_interior_pieces:
             for r, c in ring_interior_pieces[ring_color]:
                 out[r, c] = fill_color
@@ -532,30 +483,25 @@ def rule_fill_enclosed_rings(inp: np.ndarray) -> np.ndarray:
     return out
 
 
-def find_plus_flowers(inp: np.ndarray, flower_color: int = 2) -> List[Tuple[int, int]]:
-    """Find all plus-shaped flowers and return their center coordinates."""
+def find_plus_flowers(inp: np.ndarray, flower_color: int = 2):
     h, w = inp.shape
     flowers = []
 
     for r in range(1, h - 1):
         for c in range(1, w - 1):
-            # Check if this could be a flower center
             if inp[r, c] == 0:  # Center must be background
-                # Check for petals in all 4 directions
                 has_up = inp[r - 1, c] == flower_color
                 has_down = inp[r + 1, c] == flower_color
                 has_left = inp[r, c - 1] == flower_color
                 has_right = inp[r, c + 1] == flower_color
 
-                # Must have all 4 petals to be a plus flower
                 if has_up and has_down and has_left and has_right:
                     flowers.append((r, c))
 
     return flowers
 
 
-def rule_connect_flower_petals(inp: np.ndarray) -> np.ndarray:
-    """Connect aligned flower petals with blue lines."""
+def rule_connect_flower_petals(inp: np.ndarray):
     flower_color = 2
     line_color = 1
     bg = 0
@@ -563,10 +509,8 @@ def rule_connect_flower_petals(inp: np.ndarray) -> np.ndarray:
     out = inp.copy()
     h, w = inp.shape
 
-    # Find all flowers and categorize their petals by direction
     flowers = find_plus_flowers(inp, flower_color)
 
-    # Categorize petals by their direction from flower center
     up_petals = []
     down_petals = []
     left_petals = []
@@ -578,28 +522,20 @@ def rule_connect_flower_petals(inp: np.ndarray) -> np.ndarray:
         left_petals.append((center_r, center_c - 1))
         right_petals.append((center_r, center_c + 1))
 
-    # Connect horizontal pairs: right petal to left petal
-    # Right petals can connect to left petals on the same row
     for right_petal in right_petals:
         r1, c1 = right_petal
-        # Find all left petals on the same row to the right
         for left_petal in left_petals:
             r2, c2 = left_petal
             if r1 == r2 and c2 > c1:  # Same row, left petal is to the right
-                # Draw line between them
                 for c in range(c1 + 1, c2):
                     if out[r1, c] == bg:
                         out[r1, c] = line_color
 
-    # Connect vertical pairs: down petal to up petal
-    # Down petals can connect to up petals on the same column
     for down_petal in down_petals:
         r1, c1 = down_petal
-        # Find all up petals on the same column below
         for up_petal in up_petals:
             r2, c2 = up_petal
             if c1 == c2 and r2 > r1:  # Same column, up petal is below
-                # Draw line between them
                 for r in range(r1 + 1, r2):
                     if out[r, c1] == bg:
                         out[r, c1] = line_color
@@ -607,18 +543,15 @@ def rule_connect_flower_petals(inp: np.ndarray) -> np.ndarray:
     return out
 
 
-def find_tray_frames(inp: np.ndarray, frame_color: int = 8) -> List[Tuple[int, int, int, int]]:
-    """Find rectangular tray frames and return their bounding boxes (r0, r1, c0, c1)."""
+def find_tray_frames(inp: np.ndarray, frame_color: int = 8):
     h, w = inp.shape
 
-    # Find connected components of the frame color
     visited = np.zeros((h, w), dtype=bool)
     frames = []
 
     for r in range(h):
         for c in range(w):
             if inp[r, c] == frame_color and not visited[r, c]:
-                # Flood fill to find this component
                 stack = [(r, c)]
                 component = []
                 visited[r, c] = True
@@ -633,40 +566,34 @@ def find_tray_frames(inp: np.ndarray, frame_color: int = 8) -> List[Tuple[int, i
                             visited[nr, nc] = True
                             stack.append((nr, nc))
 
-                # Get bounding box
                 if component:
                     rows = [p[0] for p in component]
                     cols = [p[1] for p in component]
                     r0, r1 = min(rows), max(rows)
                     c0, c1 = min(cols), max(cols)
 
-                    # Check if this looks like a frame (has interior space)
                     if r1 - r0 >= 2 and c1 - c0 >= 2:
                         frames.append((r0, r1, c0, c1))
 
     return frames
 
 
-def rule_reflect_shape_in_tray(inp: np.ndarray) -> np.ndarray:
-    """Find shapes in trays and reflect them to fill the other half."""
+def rule_reflect_shape_in_tray(inp: np.ndarray):
     frame_color = 8
     shape_color = 2
     bg = 0
 
     out = inp.copy()
 
-    # Find all tray frames
     frames = find_tray_frames(inp, frame_color)
 
     for r0, r1, c0, c1 in frames:
-        # Extract the interior region (excluding the frame)
         interior_r0, interior_r1 = r0 + 1, r1 - 1
         interior_c0, interior_c1 = c0 + 1, c1 - 1
 
         if interior_r1 < interior_r0 or interior_c1 < interior_c0:
             continue  # No interior space
 
-        # Find where the shape is located within the interior
         shape_coords = []
         for r in range(interior_r0, interior_r1 + 1):
             for c in range(interior_c0, interior_c1 + 1):
@@ -676,43 +603,34 @@ def rule_reflect_shape_in_tray(inp: np.ndarray) -> np.ndarray:
         if not shape_coords:
             continue  # No shape in this tray
 
-        # Determine the center of the interior
         interior_h = interior_r1 - interior_r0 + 1
         interior_w = interior_c1 - interior_c0 + 1
         mid_r = interior_r0 + interior_h // 2
         mid_c = interior_c0 + interior_w // 2
 
-        # Determine if shape is primarily on left, right, top, or bottom
         shape_rows = [r for r, c in shape_coords]
         shape_cols = [c for r, c in shape_coords]
         avg_r = sum(shape_rows) / len(shape_rows)
         avg_c = sum(shape_cols) / len(shape_cols)
 
-        # Decide reflection axis
         if interior_w > interior_h:
-            # Wide tray - likely left/right reflection
             if avg_c < mid_c:
-                # Shape on left, reflect to right
                 for r, c in shape_coords:
                     offset_c = c - interior_c0
                     mirror_c = interior_c1 - offset_c
                     out[r, mirror_c] = shape_color
             else:
-                # Shape on right, reflect to left
                 for r, c in shape_coords:
                     offset_c = interior_c1 - c
                     mirror_c = interior_c0 + offset_c
                     out[r, mirror_c] = shape_color
         else:
-            # Tall tray - likely top/bottom reflection
             if avg_r < mid_r:
-                # Shape on top, reflect to bottom
                 for r, c in shape_coords:
                     offset_r = r - interior_r0
                     mirror_r = interior_r1 - offset_r
                     out[mirror_r, c] = shape_color
             else:
-                # Shape on bottom, reflect to top
                 for r, c in shape_coords:
                     offset_r = interior_r1 - r
                     mirror_r = interior_r0 + offset_r
@@ -721,8 +639,7 @@ def rule_reflect_shape_in_tray(inp: np.ndarray) -> np.ndarray:
     return out
 
 
-def rule_draw_rings_around_blue_ring(inp: np.ndarray) -> np.ndarray:
-    """Find blue rings and draw green ring inside, orange ring outside."""
+def rule_draw_rings_around_blue_ring(inp: np.ndarray):
     blue_color = 1
     green_color = 3
     orange_color = 2
@@ -731,13 +648,11 @@ def rule_draw_rings_around_blue_ring(inp: np.ndarray) -> np.ndarray:
     out = inp.copy()
     h, w = inp.shape
 
-    # Find all connected components of blue
     visited = np.zeros((h, w), dtype=bool)
 
     for r in range(h):
         for c in range(w):
             if inp[r, c] == blue_color and not visited[r, c]:
-                # Flood fill to find this blue component
                 stack = [(r, c)]
                 component = []
                 visited[r, c] = True
@@ -752,8 +667,6 @@ def rule_draw_rings_around_blue_ring(inp: np.ndarray) -> np.ndarray:
                             visited[nr, nc] = True
                             stack.append((nr, nc))
 
-                # Check if this component forms a proper ring (encloses an interior)
-                # Get bounding box
                 if not component:
                     continue
 
@@ -762,25 +675,20 @@ def rule_draw_rings_around_blue_ring(inp: np.ndarray) -> np.ndarray:
                 r0, r1 = min(rows), max(rows)
                 c0, c1 = min(cols), max(cols)
 
-                # Must have interior space
                 if r1 - r0 < 2 or c1 - c0 < 2:
                     continue
 
-                # Find interior cells using flood fill from background
                 component_set = set(component)
                 interior_cells = set()
 
-                # Find all cells inside the bounding box that are NOT the ring
                 for rr in range(r0, r1 + 1):
                     for cc in range(c0, c1 + 1):
                         if (rr, cc) not in component_set:
                             interior_cells.add((rr, cc))
 
-                # Flood fill from the edges to find exterior cells
                 exterior = set()
                 edge_queue = []
 
-                # Add all cells on the outer edge of bounding box
                 for rr in range(r0, r1 + 1):
                     for cc in [c0, c1]:
                         if (rr, cc) in interior_cells:
@@ -791,7 +699,6 @@ def rule_draw_rings_around_blue_ring(inp: np.ndarray) -> np.ndarray:
                         if (rr, cc) in interior_cells:
                             edge_queue.append((rr, cc))
 
-                # Flood fill exterior
                 for cell in edge_queue:
                     if cell in interior_cells and cell not in exterior:
                         stack = [cell]
@@ -806,15 +713,11 @@ def rule_draw_rings_around_blue_ring(inp: np.ndarray) -> np.ndarray:
                                 if (nr, nc) in interior_cells and (nr, nc) not in exterior:
                                     stack.append((nr, nc))
 
-                # True interior = interior_cells - exterior
                 true_interior = interior_cells - exterior
 
-                # Only process if there's actual enclosed interior
                 if not true_interior:
                     continue
 
-                # Draw green ring inside the blue ring
-                # Find blue cells adjacent to interior (including diagonals)
                 for rr, cc in component:
                     for dr in [-1, 0, 1]:
                         for dc in [-1, 0, 1]:
@@ -825,8 +728,6 @@ def rule_draw_rings_around_blue_ring(inp: np.ndarray) -> np.ndarray:
                                 if out[nr, nc] == bg:
                                     out[nr, nc] = green_color
 
-                # Draw orange ring outside the blue ring (including diagonals)
-                # Find background cells adjacent to blue ring
                 for rr, cc in component:
                     for dr in [-1, 0, 1]:
                         for dc in [-1, 0, 1]:
@@ -841,50 +742,40 @@ def rule_draw_rings_around_blue_ring(inp: np.ndarray) -> np.ndarray:
     return out
 
 
-def rule_count_and_sort_colored_boxes(inp: np.ndarray) -> np.ndarray:
-    """Count colored 2x2 boxes (ignoring grid color), sort by count, output as rows."""
+def rule_count_and_sort_colored_boxes(inp: np.ndarray):
     h, w = inp.shape
     bg = 0
 
-    # Find the grid color (most common non-background color that forms lines)
-    # Grid lines appear as horizontal and vertical lines
     color_counts = {}
     for val in inp.flat:
         if val != bg:
             color_counts[val] = color_counts.get(val, 0) + 1
 
-    # The grid color is the most common color
     if not color_counts:
         return inp.copy()
 
     grid_color = max(color_counts.items(), key=lambda x: x[1])[0]
 
-    # Find all 2x2 colored boxes
     box_colors = []
 
     for r in range(h - 1):
         for c in range(w - 1):
-            # Check if this is a 2x2 box of the same color (not background, not grid color)
             color = inp[r, c]
             if color == bg or color == grid_color:
                 continue
 
-            # Check if all 4 cells are the same color
             if (inp[r, c] == color and
                 inp[r, c + 1] == color and
                 inp[r + 1, c] == color and
                 inp[r + 1, c + 1] == color):
                 box_colors.append(color)
 
-    # Count occurrences of each color
     color_box_counts = {}
     for color in box_colors:
         color_box_counts[color] = color_box_counts.get(color, 0) + 1
 
-    # Sort by count (ascending), then by color value as tiebreaker
     sorted_colors = sorted(color_box_counts.items(), key=lambda x: (x[1], x[0]))
 
-    # Create output: each row has the color repeated by its count
     if not sorted_colors:
         return np.array([[bg]])
 
@@ -900,13 +791,11 @@ def rule_count_and_sort_colored_boxes(inp: np.ndarray) -> np.ndarray:
     return out
 
 
-def rule_complete_quadrant_symmetry(inp: np.ndarray) -> np.ndarray:
-    """Complete missing quadrants in a 4-way mirrored figure."""
+def rule_complete_quadrant_symmetry(inp: np.ndarray):
     h, w = inp.shape
     bg = 0
     out = inp.copy()
 
-    # Find the grid color (most common non-background color)
     color_counts = {}
     for val in inp.flat:
         if val != bg:
@@ -917,16 +806,13 @@ def rule_complete_quadrant_symmetry(inp: np.ndarray) -> np.ndarray:
 
     grid_color = max(color_counts.items(), key=lambda x: x[1])[0]
 
-    # Find horizontal and vertical grid lines
     h_lines = []
     v_lines = []
 
-    # Find horizontal grid lines (rows that are entirely grid_color)
     for r in range(h):
         if all(inp[r, c] == grid_color for c in range(w)):
             h_lines.append(r)
 
-    # Find vertical grid lines (columns that are entirely grid_color)
     for c in range(w):
         if all(inp[r, c] == grid_color for r in range(h)):
             v_lines.append(c)
@@ -934,7 +820,6 @@ def rule_complete_quadrant_symmetry(inp: np.ndarray) -> np.ndarray:
     if not h_lines or not v_lines:
         return out
 
-    # Define quadrant boundaries (regions between grid lines)
     h_regions = []
     prev_h = 0
     for hl in h_lines:
@@ -953,73 +838,57 @@ def rule_complete_quadrant_symmetry(inp: np.ndarray) -> np.ndarray:
     if prev_v < w:
         v_regions.append((prev_v, w))
 
-    # Find all non-grid, non-background colors (each represents a separate shape set)
     shape_colors = set()
     for val in inp.flat:
         if val != bg and val != grid_color:
             shape_colors.add(val)
 
-    # Process each color separately - they don't overlap
     for shape_color in shape_colors:
-        # Look for 2x2 groups where this specific color appears in exactly 3 quadrants
         for i in range(len(h_regions) - 1):
             for j in range(len(v_regions) - 1):
-                # Get the 2x2 group
                 r1_start, r1_end = h_regions[i]
                 r2_start, r2_end = h_regions[i + 1]
                 c1_start, c1_end = v_regions[j]
                 c2_start, c2_end = v_regions[j + 1]
 
-                # Check if all 4 cells are the same size
                 if (r1_end - r1_start) != (r2_end - r2_start):
                     continue
                 if (c1_end - c1_start) != (c2_end - c2_start):
                     continue
 
-                # Extract all 4 quadrants
                 top_left = out[r1_start:r1_end, c1_start:c1_end]
                 top_right = out[r1_start:r1_end, c2_start:c2_end]
                 bottom_left = out[r2_start:r2_end, c1_start:c1_end]
                 bottom_right = out[r2_start:r2_end, c2_start:c2_end]
 
-                # Check which quadrants have THIS specific color
                 has_color_tl = np.any(top_left == shape_color)
                 has_color_tr = np.any(top_right == shape_color)
                 has_color_bl = np.any(bottom_left == shape_color)
                 has_color_br = np.any(bottom_right == shape_color)
 
-                # Count how many have this color
                 color_count = sum([has_color_tl, has_color_tr, has_color_bl, has_color_br])
 
-                # If exactly 3 have this color, fill in the missing one
                 if color_count == 3:
                     if not has_color_tl:
-                        # Top-left missing this color: flip bottom-right both ways
                         out[r1_start:r1_end, c1_start:c1_end] = np.flipud(np.fliplr(bottom_right))
                     elif not has_color_tr:
-                        # Top-right missing this color: flip top-left horizontally
                         out[r1_start:r1_end, c2_start:c2_end] = np.fliplr(top_left)
                     elif not has_color_bl:
-                        # Bottom-left missing this color: flip top-left vertically
                         out[r2_start:r2_end, c1_start:c1_end] = np.flipud(top_left)
                     elif not has_color_br:
-                        # Bottom-right missing this color: flip top-left both ways
                         out[r2_start:r2_end, c2_start:c2_end] = np.flipud(np.fliplr(top_left))
 
     return out
 
 
-def rule_fit_shapes_into_holes(inp: np.ndarray) -> np.ndarray:
-    """Fit floating shapes into holes in the ground by trying all rotations."""
+def rule_fit_shapes_into_holes(inp: np.ndarray):
     h, w = inp.shape
     bg = 0
     out = inp.copy()
 
-    # Find the solid ground base (usually bottom row with dominant color)
     base_row = None
     ground_color = None
 
-    # Check last row for solid base
     if h > 0:
         last_row_colors = {}
         for val in inp[h-1, :]:
@@ -1034,10 +903,8 @@ def rule_fit_shapes_into_holes(inp: np.ndarray) -> np.ndarray:
     if base_row is None:
         return out
 
-    # Find the row with holes (row above base that has the same color with gaps)
     holes_row = None
     if base_row > 0:
-        # Check row above base
         row_above = base_row - 1
         has_ground_color = np.any(inp[row_above, :] == ground_color)
         has_background = np.any(inp[row_above, :] == bg)
@@ -1047,14 +914,12 @@ def rule_fit_shapes_into_holes(inp: np.ndarray) -> np.ndarray:
     if holes_row is None:
         return out
 
-    # Find all floating shapes (connected components above holes_row that aren't background or ground color)
     shapes = []
     visited = np.zeros((h, w), dtype=bool)
 
     for r in range(holes_row):
         for c in range(w):
             if not visited[r, c] and inp[r, c] != bg and inp[r, c] != ground_color:
-                # Flood fill to find this shape
                 shape_color = inp[r, c]
                 stack = [(r, c)]
                 shape_cells = []
@@ -1074,7 +939,6 @@ def rule_fit_shapes_into_holes(inp: np.ndarray) -> np.ndarray:
                 if shape_cells:
                     shapes.append((shape_color, shape_cells))
 
-    # Extract each shape as a minimal bounding box
     shape_arrays = []
     for shape_color, cells in shapes:
         rows = [r for r, c in cells]
@@ -1082,7 +946,6 @@ def rule_fit_shapes_into_holes(inp: np.ndarray) -> np.ndarray:
         min_r, max_r = min(rows), max(rows)
         min_c, max_c = min(cols), max(cols)
 
-        # Create shape array
         shape_h = max_r - min_r + 1
         shape_w = max_c - min_c + 1
         shape_arr = np.zeros((shape_h, shape_w), dtype=inp.dtype)
@@ -1092,13 +955,10 @@ def rule_fit_shapes_into_holes(inp: np.ndarray) -> np.ndarray:
 
         shape_arrays.append((shape_color, shape_arr))
 
-    # Clear everything above holes_row
     out[:holes_row, :] = bg
 
-    # Get all 4 rotations of a shape, sorted by height (prefer shorter/wider shapes)
     def get_rotations(arr):
         rots = [arr, np.rot90(arr), np.rot90(arr, 2), np.rot90(arr, 3)]
-        # Remove duplicate rotations for symmetric shapes
         unique_rots = []
         for rot in rots:
             is_dup = False
@@ -1108,26 +968,19 @@ def rule_fit_shapes_into_holes(inp: np.ndarray) -> np.ndarray:
                     break
             if not is_dup:
                 unique_rots.append(rot)
-        # Sort by height (ascending), then by width (descending) to prefer short+wide
         unique_rots.sort(key=lambda r: (r.shape[0], -r.shape[1]))
         return unique_rots
 
-    # Find all possible placements for each shape
-    # Use backtracking to find a valid assignment
     def try_place_shapes(shape_idx, current_out, used_cols):
-        """Recursively try to place all shapes using backtracking."""
         if shape_idx >= len(shape_arrays):
-            # All shapes placed successfully
             return current_out, True
 
         shape_color, shape_arr = shape_arrays[shape_idx]
 
-        # Try all rotations and positions for this shape
         for rotation in get_rotations(shape_arr):
             sh, sw = rotation.shape
 
             for start_col in range(w - sw + 1):
-                # Check if all columns needed are holes and not used
                 all_holes = True
                 for sc in range(sw):
                     col = start_col + sc
@@ -1138,11 +991,9 @@ def rule_fit_shapes_into_holes(inp: np.ndarray) -> np.ndarray:
                 if not all_holes:
                     continue
 
-                # Check if we have enough rows
                 if holes_row < sh:
                     continue
 
-                # Check if we can place the shape here
                 can_place = True
                 for sr in range(sh):
                     for sc in range(sw):
@@ -1164,7 +1015,6 @@ def rule_fit_shapes_into_holes(inp: np.ndarray) -> np.ndarray:
                         break
 
                 if can_place:
-                    # Try placing this shape here
                     new_out = current_out.copy()
                     new_used_cols = used_cols.copy()
 
@@ -1179,15 +1029,12 @@ def rule_fit_shapes_into_holes(inp: np.ndarray) -> np.ndarray:
                         if inp[holes_row, start_col + sc] == bg:
                             new_used_cols.add(start_col + sc)
 
-                    # Recursively try to place remaining shapes
                     result, success = try_place_shapes(shape_idx + 1, new_out, new_used_cols)
                     if success:
                         return result, True
 
-        # Couldn't place this shape
         return current_out, False
 
-    # Try to place all shapes using backtracking
     result, success = try_place_shapes(0, out, set())
     if success:
         return result
@@ -1199,7 +1046,7 @@ class DiagonalTrailRule:
     def __init__(self, train_pairs):
         self.train_pairs = train_pairs
 
-    def __call__(self, inp: np.ndarray) -> np.ndarray:
+    def __call__(self, inp: np.ndarray):
         return rule_diagonal_trails_from_blocks(inp, self.train_pairs)
 
 
@@ -1225,7 +1072,7 @@ BASE_RULES: List[Callable[[np.ndarray], np.ndarray]] = [
 ]
 
 
-def score_rule_on_pairs(rule_fn: Callable[[np.ndarray], np.ndarray], train_pairs: List[Tuple[np.ndarray, np.ndarray]]) -> float:
+def score_rule_on_pairs(rule_fn: Callable[[np.ndarray], np.ndarray], train_pairs: List[Tuple[np.ndarray, np.ndarray]]):
     total = 0.0
     for tin, tout in train_pairs:
         pred = rule_fn(tin)
@@ -1241,10 +1088,10 @@ def score_rule_on_pairs(rule_fn: Callable[[np.ndarray], np.ndarray], train_pairs
 
 
 class ArcAgent:
-    def __init__(self) -> None:
+    def __init__(self):
         pass
 
-    def _get_training_pairs(self, arc_problem: ArcProblem) -> List[Tuple[np.ndarray, np.ndarray]]:
+    def _get_training_pairs(self, arc_problem: ArcProblem):
         pairs = []
         for trn_set in arc_problem.training_set():
             tin = trn_set.get_input_data().data()
@@ -1252,10 +1099,10 @@ class ArcAgent:
             pairs.append((tin, tout))
         return pairs
 
-    def _get_test_input(self, arc_problem: ArcProblem) -> np.ndarray:
+    def _get_test_input(self, arc_problem: ArcProblem):
         return arc_problem.test_set().get_input_data().data()
 
-    def make_predictions(self, arc_problem: ArcProblem) -> List[np.ndarray]:
+    def make_predictions(self, arc_problem: ArcProblem):
         train_pairs = self._get_training_pairs(arc_problem)
         test_in = self._get_test_input(arc_problem)
         if len(train_pairs) == 0:
