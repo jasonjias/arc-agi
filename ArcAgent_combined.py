@@ -273,11 +273,15 @@ class ArcAgentB:
             return grid.copy()
         left = grid[:, :gray_col]
         right = grid[:, gray_col + 1:]
-        if left.shape != right.shape:
+        min_h = min(left.shape[0], right.shape[0])
+        min_w = min(left.shape[1], right.shape[1])
+        if min_h == 0 or min_w == 0:
             return grid.copy()
-        result = np.zeros(left.shape, dtype=int)
-        for r in range(left.shape[0]):
-            for c in range(left.shape[1]):
+        left = left[:min_h, :min_w]
+        right = right[:min_h, :min_w]
+        result = np.zeros((min_h, min_w), dtype=int)
+        for r in range(min_h):
+            for c in range(min_w):
                 if left[r, c] != 0 and right[r, c] != 0:
                     result[r, c] = 2
         return result
@@ -292,11 +296,15 @@ class ArcAgentB:
             return grid.copy()
         left = grid[:, :blue_col]
         right = grid[:, blue_col + 1:]
-        if left.shape != right.shape:
+        min_h = min(left.shape[0], right.shape[0])
+        min_w = min(left.shape[1], right.shape[1])
+        if min_h == 0 or min_w == 0:
             return grid.copy()
-        result = np.zeros(left.shape, dtype=int)
-        for r in range(left.shape[0]):
-            for c in range(left.shape[1]):
+        left = left[:min_h, :min_w]
+        right = right[:min_h, :min_w]
+        result = np.zeros((min_h, min_w), dtype=int)
+        for r in range(min_h):
+            for c in range(min_w):
                 if left[r, c] == 0 and right[r, c] == 0:
                     result[r, c] = 3
         return result
@@ -311,11 +319,15 @@ class ArcAgentB:
             return grid.copy()
         top = grid[:yellow_row, :]
         bottom = grid[yellow_row + 1:, :]
-        if top.shape != bottom.shape:
+        min_h = min(top.shape[0], bottom.shape[0])
+        min_w = min(top.shape[1], bottom.shape[1])
+        if min_h == 0 or min_w == 0:
             return grid.copy()
-        result = np.zeros(top.shape, dtype=int)
-        for r in range(top.shape[0]):
-            for c in range(top.shape[1]):
+        top = top[:min_h, :min_w]
+        bottom = bottom[:min_h, :min_w]
+        result = np.zeros((min_h, min_w), dtype=int)
+        for r in range(min_h):
+            for c in range(min_w):
                 if top[r, c] != 0 or bottom[r, c] != 0:
                     result[r, c] = 3
         return result
@@ -330,11 +342,15 @@ class ArcAgentB:
             return grid.copy()
         top = grid[:yellow_row, :]
         bottom = grid[yellow_row + 1:, :]
-        if top.shape != bottom.shape:
+        min_h = min(top.shape[0], bottom.shape[0])
+        min_w = min(top.shape[1], bottom.shape[1])
+        if min_h == 0 or min_w == 0:
             return grid.copy()
-        result = np.zeros(top.shape, dtype=int)
-        for r in range(top.shape[0]):
-            for c in range(top.shape[1]):
+        top = top[:min_h, :min_w]
+        bottom = bottom[:min_h, :min_w]
+        result = np.zeros((min_h, min_w), dtype=int)
+        for r in range(min_h):
+            for c in range(min_w):
                 if top[r, c] == 0 and bottom[r, c] == 0:
                     result[r, c] = 3
         return result
